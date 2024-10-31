@@ -84,7 +84,7 @@ class VertiportReservationGUI:
 class DragAndDrawApp:
     def __init__(self, root, bg_file):
         self.root = root
-        self.root.title("Drag and Draw Rectangles")
+        self.root.title("Airspace Allocation Interface")
 
         # Load an image (in PNG or GIF format)
         self.background_image = Image.open(bg_file)
@@ -363,7 +363,30 @@ if __name__ == "__main__":
 
     # Simulate user selecting points (since real-time click handling isn't possible in `folium` with Tkinter)
     simulate_clicks(app)
+    """
+    self.map.save(self.map_html_file)
+    #webbrowser.open(f"file://{os.path.abspath(self.map_html_file)}")
+    #imgkit.from_file(self.map_html_file,self.map_png_file)
+    print("SAVED HTML")
+    options = webdriver.ChromeOptions()
+    options.headless = True  # Run in headless mode (no GUI)
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    print("LOADING HTML FILE")
+    # Load the HTML file
+    driver.get("file://" + "/Users/rohan/Desktop/Research/airspacealloc/UAM_GUI/"+ self.map_html_file)  # Update this path to your map.html location
 
+    # Wait for a few seconds to ensure the map is fully loaded
+    time.sleep(5)  # Adjust the sleep time if needed
+    print("BEFORE SAVING PNG")
+
+    # Take a screenshot and save it
+    driver.save_screenshot(self.map_png_file)
+
+    print("AFTER SAVING PNG")
+
+    # Clean up
+    driver.quit()
+    """
     root = tk.Tk()
     app = DragAndDrawApp(root, "maps/" + case_id + ".png")
     root.mainloop()

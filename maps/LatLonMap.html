@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fully Connected Map with Markers and Network</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <style>
+        #map { height: 400px; width: 100%; }
+        #coordinates { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Interactive Fully Connected Map with Markers</h2>
+    <div id="map"></div>
+    <div id="coordinates"></div>
+
+    <script>
+        // Initialize the map centered globally
+        const map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Array to store markers
+        const markers = [];
+        const markerLayers = {}; // Object to hold marker layers
+
+        // Add markers on click
+        map.on('click', function(e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+
+            // Check if the marker already exists at the clicked location
+            const markerKey = `${lat},${lng}`;
+            if (markerLayers[markerKey]) {
+                // If marker exists, remove it
+                map.removeLayer(markerLayers[markerKey]);
+                delete markerLayers[markerKey];
+                markers.splice(markers.findIndex(m => m[0] === parseFloat(lat) && m[1] === parseFloat(lng)), 1);
+                drawLines(); // Redraw lines
+                updateCoordinatesDisplay();
+            } else {
+                // Add marker (pin) to the map
+                const newMarker = L.marker(e.latlng).addTo(map)
+                    .bindPopup(`Lat: ${lat}, Lng: ${lng}`)
+                    .openPopup();
+
+                // Store marker coordinates and reference
+                markers.push([parseFloat(lat), parseFloat(lng)]);
+                markerLayers[markerKey] = newMarker;
+
+                // Draw lines between all pairs of markers (fully connected graph)
+                drawLines();
+
+                // Update coordinates display
+                updateCoordinatesDisplay();
+            }
+        });
+
+        // Function to update coordinates display
+        function updateCoordinatesDisplay() {
+            const coordsDiv = document.getElementById('coordinates');
+            coordsDiv.innerHTML = '<h3>Stored Coordinates:</h3>';
+            markers.forEach((marker, index) => {
+                coordsDiv.innerHTML += `Point ${index + 1}: Lat: ${marker[0]}, Lng: ${marker[1]}<br>`;
+            });
+        }
+
+        // Function to draw lines between all markers (fully connected)
+        function drawLines() {
+            // Remove any existing polylines before drawing new ones
+            if (map._layers) {
+                Object.values(map._layers).forEach(layer => {
+                    if (layer instanceof L.Polyline) {
+                        map.removeLayer(layer);
+                    }
+                });
+            }
+
+            // Draw lines connecting every pair of markers (complete graph)
+            for (let i = 0; i < markers.length; i++) {
+                for (let j = i + 1; j < markers.length; j++) {
+                    L.polyline([markers[i], markers[j]], { color: 'blue', weight: 3 }).addTo(map);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
