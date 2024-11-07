@@ -5,7 +5,8 @@ import imgkit
 import webbrowser
 import os
 import math
-from PIL import Image, ImageTk, ImageDraw
+import json 
+from PIL import Image, ImageTk, ImageDraw, ImageGrab
 import random
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -92,23 +93,23 @@ class DragAndDrawApp:
         print(self.background_image.size)
         
 
-        W, H = self.background_image.size
-        scaledown = 900/max(W,H)
+        self.W, self.H = self.background_image.size
+        scaledown = 900/max(self.W,self.H)
 
-        self.background_image = self.background_image.resize((math.floor(W * scaledown), math.floor(H * scaledown)))
+        self.background_image = self.background_image.resize((math.floor(self.W * scaledown), math.floor(self.H * scaledown)))
 
-        W, H = self.background_image.size
+        self.W, self.H = self.background_image.size
 
         rows = 60
         cols = 60
 
-        self.cell_sizeX = W//cols
-        self.cell_sizeY = H//rows
+        self.cell_sizeX = self.W//cols
+        self.cell_sizeY =self. H//rows
 
-        W = self.cell_sizeX * cols
-        H = self.cell_sizeY * rows
+        self.W = self.cell_sizeX * cols
+        self.H = self.cell_sizeY * rows
 
-        self.background_image = self.background_image.resize((W, H))  # Resize as needed
+        self.background_image = self.background_image.resize((self.W,self.H))  # Resize as needed
 
         self.placing_vertiports = True 
         self.drawing_regions = False 
@@ -119,10 +120,10 @@ class DragAndDrawApp:
         self.horizon = 30
         self.period = 5
         
-        self.canvas = tk.Canvas(self.root, bg="white", width = W, height=H)
+        self.canvas = tk.Canvas(self.root, bg="white", width = self.W, height=self.H)
         self.canvas.pack(side = tk.LEFT, fill="both", expand=True)
 
-        self.overlay_image = Image.new("RGBA", (W, H), (255, 255, 255, 0))
+        self.overlay_image = Image.new("RGBA", (self.W, self.H), (255, 255, 255, 0))
         self.draw_overlay = ImageDraw.Draw(self.overlay_image)
 
         
@@ -155,9 +156,20 @@ class DragAndDrawApp:
         self.start_y = None
         self.rect = None
         self.vertiports = []
+        self.rect_list = []
+        self.rect_list2 = []
+
+        self.ref_count = 0
+        self.ref1_pixel = None
+        self.ref1_rect = None 
+        self.ref2_pixel = None
+        self.ref2_rect = None 
 
         # Bind mouse events
-        self.canvas.bind("<Button-1>", self.place_vertiport)
+        #self.canvas.bind("<Button-1>", self.place_vertiport)
+        self.root.bind("<Escape>", self.delete_ref)
+        self.canvas.bind("<Button-1>", self.place_ref)
+        
         #self.canvas.bind("<Button-1>", self.on_button_press)
         #self.canvas.bind("<B1-Motion>", self.on_move_press)
         #self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
@@ -167,11 +179,38 @@ class DragAndDrawApp:
         frame = tk.Frame()
         frame.pack(side = tk.RIGHT, padx=10, pady=10)
 
-        self.inputInstructions = tk.Label(frame, text="Place Vertiports", font=('Arial', 12))
+        self.inputInstructions = tk.Label(frame, text="Place Reference Points", font=('Arial', 12))
         self.inputInstructions.grid(row=0, column=0, columnspan= 2, padx=5, pady=5, sticky='ew')
 
-        self.button_edit_region = tk.Button(frame, text="Confirm Vertiports", command = self.button_click)
-        self.button_edit_region.grid(row=1, column = 0, columnspan= 2, padx=5, pady=(5, 200), sticky='ew')
+        self.button_edit_region = tk.Button(frame, text="Confirm Reference Points", command = self.button_click)
+        self.button_edit_region.grid(row=1, column = 0, columnspan= 2, padx=5, pady= (5,15), sticky='ew')
+
+        self.lat1_label = tk.Label(frame, text="Latitude 1", font=('Arial', 12))
+        self.lat1_label.grid(row=2, column=0, padx=5, pady=5, sticky='ew')
+        self.lon1_label = tk.Label(frame, text="Longitude 1", font=('Arial', 12))
+        self.lon1_label.grid(row=2, column=1, padx=5, pady=5, sticky='ew')
+
+        self.latitude1_field = tk.Entry(frame)
+        self.latitude1_field.grid(row = 3, column = 0, padx = 5, pady = 15)
+        self.longitude1_field = tk.Entry(frame)
+        self.longitude1_field.grid(row = 3, column = 1, padx = 5, pady = 15)
+
+        self.lat2_label = tk.Label(frame, text="Latitude 1", font=('Arial', 12))
+        self.lat2_label.grid(row=4, column=0, padx=5, pady=5, sticky='ew')
+        self.lon2_label = tk.Label(frame, text="Longitude 1", font=('Arial', 12))
+        self.lon2_label.grid(row=4, column=1, padx=5, pady=5, sticky='ew')
+
+        self.latitude2_field = tk.Entry(frame)
+        self.latitude2_field.grid(row = 5, column = 0, padx = 5, pady = 15)
+        self.longitude2_field = tk.Entry(frame)
+        self.longitude2_field.grid(row = 5, column = 1, padx = 5, pady = 15)
+
+
+        self.capacities_label = tk.Label(frame, text="Add comma-separated capacities", font=('Arial', 12))
+        self.capacities_label.grid(row=6, column=0, columnspan =2, padx=5, pady=5, sticky='ew')
+        self.capacities_field = tk.Entry(frame)
+        self.capacities_field.grid(row=7, column=0, columnspan =2, padx=5, pady=5, sticky='ew')
+
 
 
         # Method Dropdown
@@ -179,9 +218,9 @@ class DragAndDrawApp:
         selected_method.set("Ascending Auction")  # Set the default option
 
         label2 = tk.Label(frame, text="Select Method:")
-        label2.grid(row = 2, column = 0, padx = 5, pady = 15)
+        label2.grid(row = 8, column = 0, padx = 5, pady = 15)
         self.method_dropdown = tk.OptionMenu(frame, selected_method, *["Ascending Auction", "Fisher", "VCG", "FF"], command=self.on_select_method)
-        self.method_dropdown.grid(row = 2, column = 1, padx = 5, pady = 15)
+        self.method_dropdown.grid(row = 8, column = 1, padx = 5, pady = 15)
 
 
         # Discretization Dropdown
@@ -189,9 +228,9 @@ class DragAndDrawApp:
         selected_discretization.set("15s")  # Set the default option
 
         label3 = tk.Label(frame, text="Select Discretization (seconds):")
-        label3.grid(row = 3, column = 0, padx = 5, pady = 15)
+        label3.grid(row = 9, column = 0, padx = 5, pady = 15)
         self.discretization_dropdown = tk.OptionMenu(frame, selected_discretization, *["15s","30s","60s","90s"], command=self.on_select_discretization)
-        self.discretization_dropdown.grid(row = 3, column = 1, padx = 5, pady = 15)
+        self.discretization_dropdown.grid(row = 9, column = 1, padx = 5, pady = 15)
 
 
         # Horizon Dropdown
@@ -199,9 +238,9 @@ class DragAndDrawApp:
         selected_horizon.set("30 min")  # Set the default option
 
         label4 = tk.Label(frame, text="Select Horizon (minutes):")
-        label4.grid(row = 4, column = 0, padx = 5, pady = 5)
+        label4.grid(row = 10, column = 0, padx = 5, pady = 5)
         self.horizon_dropdown = tk.OptionMenu(frame, selected_horizon, *["15 min", "30 min", "60 min", "90 min", "120 min"], command=self.on_select_horizon)
-        self.horizon_dropdown.grid(row = 4, column = 1, padx = 5, pady = 15)
+        self.horizon_dropdown.grid(row = 10, column = 1, padx = 5, pady = 15)
 
 
         # Horizon Dropdown
@@ -209,9 +248,9 @@ class DragAndDrawApp:
         selected_period.set("5 min")  # Set the default option
 
         label5 = tk.Label(frame, text="Select Period (minutes):")
-        label5.grid(row = 5, column = 0, padx = 5, pady = 15)
+        label5.grid(row = 11, column = 0, padx = 5, pady = 15)
         self.period_dropdown = tk.OptionMenu(frame, selected_period, *["1 min", "2 min", "5 min", "10 min"], command=self.on_select_period)
-        self.period_dropdown.grid(row = 5, column = 1, padx = 5, pady = 15)
+        self.period_dropdown.grid(row = 11, column = 1, padx = 5, pady = 15)
         
 
 
@@ -236,9 +275,18 @@ class DragAndDrawApp:
             self.button_edit_region.config(text = "Confirm Regions")
 
             self.canvas.unbind("<Button-1>")
+            self.root.unbind("<Escape>")
+
             self.canvas.bind("<Button-1>", self.on_button_press)
             self.canvas.bind("<B1-Motion>", self.on_move_press)
             self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
+            self.latitude1_field.config(state="readonly")
+            self.longitude1_field.config(state="readonly")
+            self.latitude2_field.config(state="readonly")
+            self.longitude2_field.config(state="readonly")
+            self.canvas.delete(self.ref1_rect)
+            self.canvas.delete(self.ref2_rect)
+            
 
         elif(self.drawing_regions):
             print("Done drawing regions")
@@ -246,6 +294,7 @@ class DragAndDrawApp:
             self.done = True 
             self.inputInstructions.config(text="Finalize Case")
             self.button_edit_region.config(text = "Submit")
+            self.capacities_field.config(state="readonly")
 
             self.canvas.unbind("<Button-1>")
             self.canvas.unbind("<B1-Motion>")
@@ -255,9 +304,8 @@ class DragAndDrawApp:
             print("Discretization: ", self.discretization)
             print("Horizon: ", self.horizon)
             print("Period: ", self.period)
-
-
-
+            
+            self.save()
 
     def on_button_press(self, event):
         # Save the initial coordinates when the mouse is clicked
@@ -270,6 +318,30 @@ class DragAndDrawApp:
         # Create a new rectangle (initially with no size)
         self.rect = self.canvas.create_rectangle(event.x, event.y, event.x, event.y, outline='black', fill='', dash = (2,2))
 
+    def delete_ref(self, event):
+        print("IN DEL")
+        if(self.ref_count == 1):
+            print("del 1")
+            self.ref1_pixel = None
+            self.canvas.delete(self.ref1_rect)
+            self.ref_count -= 1 
+        elif (self.ref_count == 2):
+            print("del 2")
+            self.ref2_pixel = None
+            self.canvas.delete(self.ref2_rect)
+            self.ref_count -= 1
+    def place_ref(self, event):
+        if(self.ref_count==0):
+            self.ref1_pixel = [event.x, event.y]
+            self.ref1_rect = self.canvas.create_rectangle(event.x - 5 , event.y - 5, event.x + 5, event.y + 5, outline='black', fill='blue', dash = (2,2))
+            self.ref_count += 1
+            print("1 ", self.ref1_pixel)
+        elif(self.ref_count==1):
+            self.ref2_pixel = [event.x, event.y]
+            self.ref2_rect = self.canvas.create_rectangle(event.x - 5, event.y - 5, event.x + 5, event.y + 5, outline='black', fill='#DAA520', dash = (2,2))
+            self.ref_count += 1
+            print("2: ", self.ref2_pixel)
+        print("placed point, count: ", self.ref_count)
     def place_vertiport(self, event):
         # Save the initial coordinates when the mouse is clicked
 
@@ -283,6 +355,20 @@ class DragAndDrawApp:
         # Update the rectangle size as the mouse is dragged
         cur_x, cur_y = (event.x, event.y)
         self.canvas.coords(self.rect, self.rect_start_x, self.rect_start_y, cur_x, cur_y)
+    
+    def interpolate(self, x, y):
+        dx = x - self.ref1_pixel[0]
+        dy = y - self.ref1_pixel[1]
+        print("diff ", x, y, self.ref1_pixel)
+        lat1 = float(self.latitude1_field.get())
+        lon1 = float(self.longitude1_field.get())
+        lat2 = float(self.latitude2_field.get())
+        lon2 = float(self.longitude2_field.get())
+        print("dy", dy, (lat2 - lat1) / (self.ref2_pixel[1] - self.ref1_pixel[1]))
+        print("dx", dx, (lon2 - lon1) / (self.ref2_pixel[0] - self.ref1_pixel[0]))
+        current_lat = lat1 + dy * (lat2 - lat1) / (self.ref2_pixel[1] - self.ref1_pixel[1])
+        current_lon = lon1 + dx * (lon2 - lon1) / (self.ref2_pixel[0] - self.ref1_pixel[0])
+        return [current_lat, current_lon]
 
     def on_button_release(self, event):
         end_x = event.x // self.cell_sizeX
@@ -291,11 +377,18 @@ class DragAndDrawApp:
         if(self.rect):
             self.canvas.delete(self.rect)
 
-        print("TOPL: ", self.start_x, self.start_y, "BOTR: ", end_x, end_y)
+        topl = self.interpolate(self.rect_start_x, self.rect_start_y) 
+        botr = self.interpolate(event.x, event.y)
+        self.rect_list += [[topl, botr]]
+        self.rect_list2 += [[self.start_x,self.start_y,end_x,end_y]]
+        print("TOPL: ", topl, "BOTR: ", botr)
         
         self.fill_cells(self.start_x, self. start_y, end_x, end_y)
 
         self.bgAverage(self.overlay_image)
+
+
+
         #self.tk_overlay_image = ImageTk.PhotoImage(self.overlay_image)
         
         self.canvas.itemconfig(self.canvas_image, image=self.tk_blended_bg)
@@ -330,6 +423,35 @@ class DragAndDrawApp:
                 # Draw the rectangle on the overlay image with translucent color
                 self.draw_overlay.rectangle([x1_pixel, y1_pixel, x2_pixel, y2_pixel], fill=color)
                 #self.draw_overlay.rectangle([x1_pixel, y1_pixel, x2_pixel, y2_pixel], outline = 'black', width = 2)
+    def save(self):
+        out = {}
+        out["Method"] = self.method
+        out["Discretiziation"] = self.discretization
+        out["Horizon"] = self.horizon
+        out["Period"] = self.period
+        out["Reference 1 Pixel"] = self.ref1_pixel
+        out["Reference 1 Lat/Lon"] = self.ref1_rect
+        out["Reference 2 Pixel"] = self.ref2_pixel
+        out["Reference 2 Lat/Lon"] = self.ref2_rect
+        out["Region List - Pixels"] = self.rect_list2
+        out["Region List - Lat/Lon"] = self.rect_list
+        out["Capacities"] = self.capacities_field.get().split(",")
+        #json_data = json.dumps(out, indent=4)
+        with open("operator_data.json", "w") as file:
+            json.dump(out, file, indent=4)
+        
+        print("Parameters saved to operator_data.json")
+
+        self.canvas.postscript(file="operator_image.ps", colormode="color")
+
+        # Convert the PostScript file to PNG with Pillow
+        image = Image.open("operator_image.ps")
+        image.save("operator_image.png", "png")
+
+        print("Image saved to operator_image.png")
+
+
+
     
    
 

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map with Points, Lines, and Paintable Grid with Rectangle Selection</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <style>
+        #map { height: 400px; width: 70%; float: left; }
+        #controls { width: 30%; float: left; padding-left: 20px; }
+        #download-btn, #start-grid-btn, #download-regions-btn, #update-all-btn, #download-all-btn { margin-top: 10px; }
+        #coordinates { margin-top: 10px; }
+        .region-list { margin-top: 20px; }
+        .region-item { margin-bottom: 10px; }
+        .dropdowns {
+            margin-top: 20px;
+        }
+        .dropdown {
+            margin-bottom: 10px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h2>Operator Side UAM GUI</h2>
+    <div id="map"></div>
+    <div id="controls">
+        <button id="download-btn" onclick="downloadPoints()">Confirm Points</button>
+        <button id="start-grid-btn" onclick="activateGridMode()">Select Grid Area</button>
+        <button id="download-regions-btn" onclick="downloadRegions()" style="display: none;">Confirm Regions</button>
+        <button id="update-all-btn" onclick="updateAllRegions()" style="display: none;">Update All Capacities</button>
+        <button id="download-all-btn" onclick="downloadAllData()">Download All Data</button>
+        
+        <div class="dropdowns">
+            <div class="dropdown">
+                <label for="method">Method</label>
+                <select id="method">
+                    <option value="Ascending Auction">Ascending Auction</option>
+                    <option value="Fisher">Fisher</option>
+                    <option value="VCG">VCG</option>
+                    <option value="FF">FF</option>
+                </select>
+            </div>
+            <div class="dropdown">
+                <label for="discretization">Discretization</label>
+                <select id="discretization">
+                    <option value="15s">15s</option>
+                    <option value="30s">30s</option>
+                    <option value="60s">60s</option>
+                    <option value="90s">90s</option>
+                </select>
+            </div>
+            <div class="dropdown">
+                <label for="period">Period</label>
+                <select id="period">
+                    <option value="1 min">1 min</option>
+                    <option value="2 min">2 min</option>
+                    <option value="5 min">5 min</option>
+                    <option value="10 min">10 min</option>
+                </select>
+            </div>
+            <div class="dropdown">
+                <label for="horizon">Horizon</label>
+                <select id="horizon">
+                    <option value="15 min">15 min</option>
+                    <option value="30 min">30 min</option>
+                    <option value="60 min">60 min</option>
+                    <option value="90 min">90 min</option>
+                    <option value="120 min">120 min</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="coordinates"><h3>Stored Coordinates:</h3></div>
+        <div class="region-list">
+            <h3>Regions:</h3>
+            <div id="regions-container"></div>
+        </div>
+    </div>
+
+    <script>
+        const map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        const markers = [];
+        const markerLayers = {};
+        const polylines = [];
+        const selectedRegions = [];
+        let gridCells = [];
+        let dragRectangle;
+
+        map.on('click', function(e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+            const markerKey = `${lat},${lng}`;
+
+            if (markerLayers[markerKey]) {
+                map.removeLayer(markerLayers[markerKey]);
+                delete markerLayers[markerKey];
+                markers.splice(markers.findIndex(m => m[0] === parseFloat(lat) && m[1] === parseFloat(lng)), 1);
+                drawLines();
+            } else {
+                const newMarker = L.marker(e.latlng).addTo(map).bindPopup(`Lat: ${lat}, Lng: ${lng}`).openPopup();
+                markers.push([parseFloat(lat), parseFloat(lng)]);
+                markerLayers[markerKey] = newMarker;
+                drawLines();
+            }
+
+            updateCoordinatesDisplay();
+        });
+
+        function drawLines() {
+            polylines.forEach(line => map.removeLayer(line));
+            polylines.length = 0;
+
+            for (let i = 0; i < markers.length; i++) {
+                for (let j = i + 1; j < markers.length; j++) {
+                    const polyline = L.polyline([markers[i], markers[j]], { color: 'blue', weight: 2 }).addTo(map);
+                    polylines.push(polyline);
+                }
+            }
+        }
+
+        function updateCoordinatesDisplay() {
+            const coordsDiv = document.getElementById('coordinates');
+            coordsDiv.innerHTML = '<h3>Stored Coordinates:</h3>';
+            markers.forEach((marker, index) => {
+                coordsDiv.innerHTML += `Point ${index + 1}: Lat: ${marker[0]}, Lng: ${marker[1]}<br>`;
+            });
+        }
+
+        function downloadPoints() {
+            const data = { markers: markers };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'points.json';
+            URL.revokeObjectURL(url);
+
+            document.getElementById('start-grid-btn').style.display = 'inline-block';
+            document.getElementById('download-regions-btn').style.display = 'inline-block';
+            document.getElementById('update-all-btn').style.display = 'inline-block';
+
+            // Disable map dragging after points are downloaded
+            map.dragging.disable();
+        }
+
+        let gridBounds = [];
+        function activateGridMode() {
+            map.off('click');
+            gridBounds = [];
+
+            map.on('click', setGridBounds);
+            alert("Click to set the top-left and bottom-right corners for the grid.");
+        }
+
+        function setGridBounds(e) {
+            if (gridBounds.length < 2) {
+                gridBounds.push(e.latlng);
+                L.marker(e.latlng).addTo(map).bindPopup(`Grid Bound ${gridBounds.length}`).openPopup();
+
+                if (gridBounds.length === 2) {
+                    map.off('click', setGridBounds);
+                    const cellWidth = parseFloat(prompt("Enter cell width (in degrees):", "1"));
+                    const cellHeight = parseFloat(prompt("Enter cell height (in degrees):", "1"));
+
+                    if (!isNaN(cellWidth) && !isNaN(cellHeight)) {
+                        createPaintableGrid(gridBounds, cellWidth, cellHeight);
+                        enableRectanglePaint();
+                    } else {
+                        alert("Invalid cell size. Please try again.");
+                    }
+                }
+            }
+        }
+
+        function createPaintableGrid(bounds, cellWidth, cellHeight) {
+            const [topLeft, bottomRight] = bounds;
+            const startLat = Math.min(topLeft.lat, bottomRight.lat);
+            const endLat = Math.max(topLeft.lat, bottomRight.lat);
+            const startLng = Math.min(topLeft.lng, bottomRight.lng);
+            const endLng = Math.max(topLeft.lng, bottomRight.lng);
+
+            // Clear the existing grid cells before creating new ones
+            gridCells.forEach(cell => map.removeLayer(cell));
+            gridCells = [];
+
+            for (let lat = startLat; lat < endLat; lat += cellHeight) {
+                for (let lng = startLng; lng < endLng; lng += cellWidth) {
+                    const cellBounds = [[lat, lng], [lat + cellHeight, lng + cellWidth]];
+                    const cell = L.rectangle(cellBounds, {
+                        color: "#666", 
+                        weight: 1, 
+                        fillOpacity: 0.1
+                    }).addTo(map);
+                    gridCells.push(cell);
+                }
+            }
+
+            // Add a border for the grid boundary
+            const gridBorder = L.rectangle(
+                [[startLat, startLng], [endLat, endLng]],
+                { color: 'black', weight: 2 }
+            ).addTo(map);
+            gridCells.push(gridBorder);
+        }
+
+        function enableRectanglePaint() {
+            let startPoint = null;
+
+            map.on('mousedown', function(e) {
+                startPoint = e.latlng;
+            });
+
+            map.on('mouseup', function(e) {
+                if (startPoint) {
+                    const endPoint = e.latlng;
+                    const bounds = [
+                        [startPoint.lat, startPoint.lng],
+                        [endPoint.lat, endPoint.lng]
+                    ];
+                    const rectangle = L.rectangle(bounds, { color: 'green', weight: 2 }).addTo(map);
+                    gridCells.push(rectangle);
+                    startPoint = null;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
