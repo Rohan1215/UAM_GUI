@@ -312,25 +312,35 @@
             const horizon = parseFloat(document.getElementById('horizon').value);
 
          
-            const structuredMarkers = markers.reduce((acc, marker, index) => {
-                // Generate a unique vertiport ID (V001, V002, ...)
-                const vertiportId = `V${(index + 1).toString().padStart(3, '0')}`;
+            const vertiports = markers.reduce((acc, marker, index) => {
+            const vertiportId = `V${(index + 1).toString().padStart(3, '0')}`;
 
-                // Add the marker with its properties to the accumulator
-                acc.vertiports[vertiportId] = {
-                    latitude: marker[0],
-                    longitude: marker[1],
-                };
+        // Add marker as vertiport
+            acc[vertiportId] = {
+                latitude: marker[0],
+                longitude: marker[1],
+                landing_capacity: 2,
+                takeoff_capacity: 1,
+                hold_capacity: 8
+            };
 
-                return acc;
-            }, { vertiports: {} }); // Initial accumulator with an empty "vertiports" object
+        return acc;
+          }, {}); // Now it directly creates the vertiports object
 
-            edges = []
+            let routes = [];
+            for(let i = 0; i < markers.length; i++) {
+                for(let j = i; j < markers.length; j++){
+                    o_vp = `V${(i + 1).toString().padStart(3, '0')}`;
+                    d_vp = `V${(j + 1).toString().padStart(3, '0')}`;
+                    dist = haversine(markers[i][0],markers[i][1],markers[j][0],markers[j][1]);
+                    routes.push({origin_vertiport_id: o_vp, destination_vertiport_id: d_vp, travel_time: 5, capacity: 3, distance: dist});
+                }
+            }
 
-            for i in 
 
             const data = {
-                structuredMarkers,
+                vertiports,
+                routes,
                 regions: selectedRegions,
                 timing_info: {
                     start_time: 1,
