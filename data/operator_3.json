@@ -1,0 +1,167 @@
+{
+  "vertiports": {
+    "V001": {
+      "latitude": 37.913681,
+      "longitude": -122.533333,
+      "landing_capacity": 4,
+      "takeoff_capacity": 2,
+      "hold_capacity": 8
+    },
+    "V002": {
+      "latitude": 37.934078,
+      "longitude": -122.286072,
+      "landing_capacity": 5,
+      "takeoff_capacity": 1,
+      "hold_capacity": 8
+    },
+    "V003": {
+      "latitude": 37.790964,
+      "longitude": -122.431641,
+      "landing_capacity": 4,
+      "takeoff_capacity": 32,
+      "hold_capacity": 7
+    },
+    "V004": {
+      "latitude": 37.788794,
+      "longitude": -122.217407,
+      "landing_capacity": 7,
+      "takeoff_capacity": 1,
+      "hold_capacity": 9
+    },
+    "V005": {
+      "latitude": 37.966565,
+      "longitude": -122.714539,
+      "landing_capacity": 5,
+      "takeoff_capacity": 8,
+      "hold_capacity": 3
+    }
+  },
+  "routes": [
+    {
+      "origin_vertiport_id": "V001",
+      "destination_vertiport_id": "V001",
+      "travel_time": 5,
+      "capacity": 3,
+      "distance": 0
+    },
+    {
+      "origin_vertiport_id": "V001",
+      "destination_vertiport_id": "V002",
+      "travel_time": 5,
+      "capacity": 3,
+      "distance": 21.806431389200156
+    },
+    {
+      "origin_vertiport_id": "V001",
+      "destination_vertiport_id": "V003",
+      "travel_time": 5,
+      "capacity": 3,
+      "distance": 16.30696274442291
+    },
+    {
+      "origin_vertiport_id": "V001",
+      "destination_vertiport_id": "V004",
+      "travel_time": 5,
+      "capacity": 3,
+      "distance": 31.02030668975061
+    },
+    {
+      "origin_vertiport_id": "V001",
+      "destination_vertiport_id": "V005",
+      "travel_time": 5,
+      "capacity": 3,
+      "distance": 16.943869668737335
+    },
+    {
+      "origin_vertiport_id": "V002",
+      "destination_vertiport_id": "V002",
+      "travel_time": 5,
+      "capacity": 3,
+      "distance": 0
+    },
+    {
+      "origin_vertiport_id": "V002",
+      "destination_vertiport_id": "V003",
+      "travel_time": 5,
+      "capacity": 3,
+      "distance": 20.40942519413353
+    },
+    {
+      "origin_vertiport_id": "V002",
+      "destination_vertiport_id": "V004",
+      "travel_time": 5,
+      "capacity": 3,
+      "distance": 17.242834491747992
+    },
+    {
+      "origin_vertiport_id": "V002",
+      "destination_vertiport_id": "V005",
+      "travel_time": 5,
+      "capacity": 3,
+      "distance": 37.74213423867896
+    },
+    {
+      "origin_vertiport_id": "V003",
+      "destination_vertiport_id": "V003",
+      "travel_time": 5,
+      "capacity": 3,
+      "distance": 0
+    },
+    {
+      "origin_vertiport_id": "V003",
+      "destination_vertiport_id": "V004",
+      "travel_time": 5,
+      "capacity": 3,
+      "distance": 18.826983455048282
+    },
+    {
+      "origin_vertiport_id": "V003",
+      "destination_vertiport_id": "V005",
+      "travel_time": 5,
+      "capacity": 3,
+      "distance": 31.58720587578447
+    },
+    {
+      "origin_vertiport_id": "V004",
+      "destination_vertiport_id": "V004",
+      "travel_time": 5,
+      "capacity": 3,
+      "distance": 0
+    },
+    {
+      "origin_vertiport_id": "V004",
+      "destination_vertiport_id": "V005",
+      "travel_time": 5,
+      "capacity": 3,
+      "distance": 47.901390525155776
+    },
+    {
+      "origin_vertiport_id": "V005",
+      "destination_vertiport_id": "V005",
+      "travel_time": 5,
+      "capacity": 3,
+      "distance": 0
+    }
+  ],
+  "regions": [
+    {
+      "bounds": "-122.92877197265626,37.7822816496242,-122.39868164062501,38.05745184018512",
+      "capacity": "5"
+    },
+    {
+      "bounds": "-122.29980468750001,37.7518849579053,-121.86859130859376,38.1201415082019",
+      "capacity": "8"
+    },
+    {
+      "bounds": "-122.90679931640626,37.71713058533317,-122.20916748046876,37.856050157496426",
+      "capacity": "3"
+    }
+  ],
+  "timing_info": {
+    "start_time": 1,
+    "end_time": 120,
+    "discretization": 0.5,
+    "auction_frequency": 4,
+    "method": "VCG"
+  }
+}

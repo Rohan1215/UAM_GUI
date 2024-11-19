@@ -1,0 +1,22 @@
+{
+  "AC004": {
+    "appearanceTime": 24,
+    "originVertiportId": "V003",
+    "budgetConstraint": 72,
+    "decayFactor": 0.95,
+    "requests": [
+      {
+        "destinationVertiportId": "V003",
+        "departureTime": 50,
+        "arrivalTime": 70,
+        "valuation": 100
+      },
+      {
+        "destinationVertiportId": "V005",
+        "departureTime": 70,
+        "arrivalTime": 80,
+        "valuation": 90
+      }
+    ]
+  }
+}

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map with Points, Lines, and Paintable Grid with Rectangle Selection</title>
+    <title>AAM Operator Side</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
     <style>
@@ -23,7 +23,7 @@
     </style>
 </head>
 <body>
-    <h2>Operator Side UAM GUI</h2>
+    <h2>UAM Operator Side Interface</h2>
     <div id="map"></div>
     <div id="controls">
         <button id="download-btn" onclick="downloadPoints()">Confirm Points</button>
@@ -45,10 +45,10 @@
             <div class="dropdown">
                 <label for="discretization">Discretization</label>
                 <select id="discretization">
-                    <option value="15s">15s</option>
-                    <option value="30s">30s</option>
-                    <option value="60s">60s</option>
-                    <option value="90s">90s</option>
+                    <option value="0.25 min">15s</option>
+                    <option value="0.5 min">30s</option>
+                    <option value="1 min">1 min</option>
+                    <option value="1.5 min">1.5 min</option>
                 </select>
             </div>
             <div class="dropdown">
@@ -93,24 +93,53 @@
         let dragRectangle;
 
         map.on('click', function(e) {
-            const lat = e.latlng.lat.toFixed(6);
-            const lng = e.latlng.lng.toFixed(6);
-            const markerKey = `${lat},${lng}`;
+    const lat = e.latlng.lat.toFixed(6);
+    const lng = e.latlng.lng.toFixed(6);
+    const markerKey = `${lat},${lng}`;
 
-            if (markerLayers[markerKey]) {
-                map.removeLayer(markerLayers[markerKey]);
-                delete markerLayers[markerKey];
-                markers.splice(markers.findIndex(m => m[0] === parseFloat(lat) && m[1] === parseFloat(lng)), 1);
-                drawLines();
-            } else {
-                const newMarker = L.marker(e.latlng).addTo(map).bindPopup(`Lat: ${lat}, Lng: ${lng}`).openPopup();
-                markers.push([parseFloat(lat), parseFloat(lng)]);
-                markerLayers[markerKey] = newMarker;
-                drawLines();
-            }
+    if (markerLayers[markerKey]) {
+        // Remove marker if it already exists
+        map.removeLayer(markerLayers[markerKey]);
+        delete markerLayers[markerKey];
+        markers.splice(markers.findIndex(m => m.lat === parseFloat(lat) && m.lng === parseFloat(lng)), 1);
+        drawLines();
+    } else {
+        // Prompt for capacities
+        const landingCapacity = prompt("Enter landing capacity:");
+        const holdingCapacity = prompt("Enter holding capacity:");
+        const departureCapacity = prompt("Enter departure capacity:");
 
-            updateCoordinatesDisplay();
-        });
+        if (landingCapacity && holdingCapacity && departureCapacity) {
+            // Store the marker along with capacities
+            const newMarkerData = {
+                lat: parseFloat(lat),
+                lng: parseFloat(lng),
+                landingCapacity,
+                holdingCapacity,
+                departureCapacity
+            };
+            markers.push(newMarkerData);
+
+            const popupContent = `
+                Lat: ${lat}, Lng: ${lng}<br>
+                Landing Capacity: ${landingCapacity}<br>
+                Holding Capacity: ${holdingCapacity}<br>
+                Departure Capacity: ${departureCapacity}
+            `;
+
+            const newMarker = L.marker(e.latlng).addTo(map)
+                .bindPopup(popupContent)
+                .openPopup();
+
+            markerLayers[markerKey] = newMarker;
+            drawLines();
+        } else {
+            alert("All capacities must be filled out.");
+        }
+    }
+
+    updateCoordinatesDisplay();
+});
 
         function drawLines() {
             polylines.forEach(line => map.removeLayer(line));
@@ -128,7 +157,10 @@
             const coordsDiv = document.getElementById('coordinates');
             coordsDiv.innerHTML = '<h3>Stored Coordinates:</h3>';
             markers.forEach((marker, index) => {
-                coordsDiv.innerHTML += `Point ${index + 1}: Lat: ${marker[0]}, Lng: ${marker[1]}<br>`;
+                coordsDiv.innerHTML += `
+                    Point ${index + 1}: Lat: ${marker.lat}, Lng: ${marker.lng}<br>
+                    Landing Capacity: ${marker.landingCapacity}, Holding Capacity: ${marker.holdingCapacity}, Departure Capacity: ${marker.departureCapacity}<br><br>
+                `;
             });
         }
 
@@ -307,30 +339,40 @@
 
         function downloadAllData() {
             const method = document.getElementById('method').value;
-            const discretization = parseFloat(document.getElementById('discretization').value) / 60;
-            const period = parseFloat(document.getElementById('period').value);
-            const horizon = parseFloat(document.getElementById('horizon').value);
+            const discretization = parseFloat(document.getElementById('discretization').value);
+            const period = parseFloat(document.getElementById('period').value) / discretization;
+            const horizon = parseFloat(document.getElementById('horizon').value) / discretization;
 
          
-            const structuredMarkers = markers.reduce((acc, marker, index) => {
-                // Generate a unique vertiport ID (V001, V002, ...)
-                const vertiportId = `V${(index + 1).toString().padStart(3, '0')}`;
+            const vertiports = markers.reduce((acc, marker, index) => {
+            const vertiportId = `V${(index + 1).toString().padStart(3, '0')}`;
 
-                // Add the marker with its properties to the accumulator
-                acc.vertiports[vertiportId] = {
-                    latitude: marker[0],
-                    longitude: marker[1],
-                };
+        // Add marker as vertiport
+            acc[vertiportId] = {
+                latitude: marker.lat,
+                longitude: marker.lng,
+                landing_capacity: parseFloat(marker.landingCapacity),
+                takeoff_capacity: parseFloat(marker.departureCapacity),
+                hold_capacity: parseFloat(marker.holdingCapacity)
+            };
 
-                return acc;
-            }, { vertiports: {} }); // Initial accumulator with an empty "vertiports" object
+        return acc;
+          }, {}); // Now it directly creates the vertiports object
 
-            edges = []
+            let routes = [];
+            for(let i = 0; i < markers.length; i++) {
+                for(let j = i; j < markers.length; j++){
+                    o_vp = `V${(i + 1).toString().padStart(3, '0')}`;
+                    d_vp = `V${(j + 1).toString().padStart(3, '0')}`;
+                    dist = haversine(markers[i].lat,markers[i].lng,markers[j].lat,markers[j].lng);
+                    routes.push({origin_vertiport_id: o_vp, destination_vertiport_id: d_vp, travel_time: 5, capacity: 3, distance: dist});
+                }
+            }
 
-            for i in 
 
             const data = {
-                structuredMarkers,
+                vertiports,
+                routes,
                 regions: selectedRegions,
                 timing_info: {
                     start_time: 1,
@@ -345,9 +387,10 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'all_data.json';
+            a.download = 'operator.json';
             a.click();
             URL.revokeObjectURL(url);
+            window.open('Userside.html', '_blank');
         }
     </script>
 </body>

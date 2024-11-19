@@ -1,0 +1,36 @@
+{
+  "AC001": {
+    "appearanceTime": 5,
+    "originVertiportId": "V005",
+    "budgetConstraint": 89,
+    "decayFactor": 0.95,
+    "requests": [
+      {
+        "destinationVertiportId": "V001",
+        "departureTime": 88,
+        "arrivalTime": 99,
+        "valuation": 5
+      },
+      {
+        "destinationVertiportId": "V002",
+        "departureTime": 20,
+        "arrivalTime": 30,
+        "valuation": 15
+      }
+    ]
+  },
+  "AC002": {
+    "appearanceTime": 15,
+    "originVertiportId": "V007",
+    "budgetConstraint": 30,
+    "decayFactor": 0.95,
+    "requests": [
+      {
+        "destinationVertiportId": "V003",
+        "departureTime": 80,
+        "arrivalTime": 90,
+        "valuation": 456
+      }
+    ]
+  }
+}
