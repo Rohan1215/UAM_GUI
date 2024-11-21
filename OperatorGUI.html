@@ -91,6 +91,9 @@
         const selectedRegions = [];
         let gridCells = [];
         let dragRectangle;
+        let grid_lat;
+        let grid_lon;
+        let gridBounds = [];
 
         map.on('click', function(e) {
     const lat = e.latlng.lat.toFixed(6);
@@ -105,9 +108,14 @@
         drawLines();
     } else {
         // Prompt for capacities
-        const landingCapacity = prompt("Enter landing capacity:");
-        const holdingCapacity = prompt("Enter holding capacity:");
-        const departureCapacity = prompt("Enter departure capacity:");
+        //const landingCapacity = prompt("Enter landing capacity:");
+        //const holdingCapacity = prompt("Enter holding capacity:");
+        //const departureCapacity = prompt("Enter departure capacity:");
+
+        const capacities = prompt("Enter landing, holding, and departure capacities (comma separated): ").split(",")
+        landingCapacity = capacities[0]
+        holdingCapacity = capacities[1]
+        departureCapacity = capacities[2]
 
         if (landingCapacity && holdingCapacity && departureCapacity) {
             // Store the marker along with capacities
@@ -182,7 +190,7 @@
             map.dragging.disable();
         }
 
-        let gridBounds = [];
+       
         function activateGridMode() {
             map.off('click');
             gridBounds = [];
@@ -195,7 +203,6 @@
             if (gridBounds.length < 2) {
                 gridBounds.push(e.latlng);
                 L.marker(e.latlng).addTo(map).bindPopup(`Grid Bound ${gridBounds.length}`).openPopup();
-
                 if (gridBounds.length === 2) {
                     map.off('click', setGridBounds);
                     const cellWidth = parseFloat(prompt("Enter cell width (in degrees):", "1"));
@@ -368,15 +375,36 @@
                     routes.push({origin_vertiport_id: o_vp, destination_vertiport_id: d_vp, travel_time: 5, capacity: 3, distance: dist});
                 }
             }
+            let flightnames = []
+            for (let i =0; i < 20; i++) {
+                s = `AC${(i + 1).toString().padStart(3, '0')}`;
+                flightnames.push(s);
+            }
+            fleets = {};
+            fleet_id = {};
+            fleet_id["members"] = flightnames;
+            fleet_id["rho"] = 2;
+            fleets["F001"] = fleet_id;
 
+            congestion_params = {};
+            congestion_params["lambda"] = 0.1;
+            C_list = [];
+            for(let i =0; i < 20; i++) {
+                C_list.push(i * 0.3);
+            }
+            congestion_params["C"] = C_list;
 
             const data = {
                 vertiports,
+                congestion_params,
+                fleets,
                 routes,
                 regions: selectedRegions,
+                gridBounds,
                 timing_info: {
                     start_time: 1,
 		            end_time: horizon,
+                    time_step: 1,
                     discretization: discretization,
                     auction_frequency: period,
                     method: method,

@@ -1,0 +1,74 @@
+{
+  "AC001": {
+    "appearanceTime": 5,
+    "originVertiportId": "V002",
+    "budgetConstraint": 60,
+    "decayFactor": 0.95,
+    "requests": [
+      {
+        "destinationVertiportId": "V002",
+        "departureTime": 0,
+        "arrivalTime": 1,
+        "valuation": 40
+      },
+      {
+        "destinationVertiportId": "V003",
+        "departureTime": 50,
+        "arrivalTime": 60,
+        "valuation": 50
+      },
+      {
+        "destinationVertiportId": "V006",
+        "departureTime": 70,
+        "arrivalTime": 90,
+        "valuation": 120
+      }
+    ]
+  },
+  "AC002": {
+    "appearanceTime": 11,
+    "originVertiportId": "V005",
+    "budgetConstraint": 100,
+    "decayFactor": 0.95,
+    "requests": [
+      {
+        "destinationVertiportId": "V005",
+        "departureTime": 0,
+        "arrivalTime": 1,
+        "valuation": 10
+      },
+      {
+        "destinationVertiportId": "V007",
+        "departureTime": 40,
+        "arrivalTime": 60,
+        "valuation": 80
+      },
+      {
+        "destinationVertiportId": "V003",
+        "departureTime": 50,
+        "arrivalTime": 80,
+        "valuation": 90
+      }
+    ]
+  },
+  "AC003": {
+    "appearanceTime": 50,
+    "originVertiportId": "V003",
+    "budgetConstraint": 150,
+    "decayFactor": 0.95,
+    "requests": [
+      {
+        "destinationVertiportId": "V003",
+        "departureTime": 0,
+        "arrivalTime": 1,
+        "valuation": 20
+      },
+      {
+        "destinationVertiportId": "V001",
+        "departureTime": 90,
+        "arrivalTime": 100,
+        "valuation": 120
+      }
+    ]
+  }
+}
