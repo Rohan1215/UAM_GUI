@@ -9,39 +9,52 @@
         body {
             font-family: 'Roboto', sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             color: #333;
             background-image: url('AirTaxi.webp');
             background-repeat: no-repeat;
             background-position: center center;
             background-attachment: fixed;
             background-size: cover;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            min-height: 100vh;
         }
+
         h1 {
             font-size: 3rem;
             color: #fff;
             text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
             margin: 20px 0;
+            text-align: center;
         }
+
         .section {
             background: rgba(255, 255, 255, 0.9);
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            margin-bottom: 20px;
+            margin: 20px auto;
             padding: 20px;
             width: 100%;
-            max-width: 600px;
+            max-width: 500px;
+            box-sizing: border-box;
         }
+
         .section h3 {
             margin-top: 0;
             color: #4CAF50;
         }
-        .section select, .section input, .section button {
+
+        .section label {
+            display: block;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+
+        .section select,
+        .section input,
+        .section button {
             width: 100%;
             margin: 10px 0;
             padding: 10px;
@@ -50,6 +63,7 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
+
         .section button {
             background: #4CAF50;
             color: #fff;
@@ -57,21 +71,15 @@
             cursor: pointer;
             transition: background 0.3s;
         }
+
         .section button:hover {
             background: #45a049;
         }
-        .download-section {
-            margin-top: 20px;
-        }
-        .download-button {
-            background: #2196F3 !important;
-        }
-        .download-button:hover {
-            background: #1976D2 !important;
-        }
+
         .request-list {
             margin-top: 20px;
         }
+
         .request-item {
             background: #f5f5f5;
             padding: 10px;
@@ -83,7 +91,7 @@
 </head>
 <body>
     <h1>Vertiport Reservation System</h1>
-    
+
     <!-- Flight Setup -->
     <div class="section" id="flightSetup">
         <h3>Flight Setup</h3>
@@ -118,8 +126,7 @@
     </div>
 
     <!-- All request-related content in one div -->
-    <div id="allRequestContent" style="display: none; width: 100%; max-width: 600px;">
-        <!-- Request Submission -->
+    <div id="allRequestContent" style="display: none;">
         <div class="section" id="requestForm">
             <h3>Submit Request</h3>
             <label>Destination Vertiport ID:</label>
@@ -140,25 +147,14 @@
             <label>Valuation:</label>
             <input type="number" id="requestValuation" placeholder="Enter Valuation (Budget Factor)">
             <button onclick="submitRequest()">Submit Request</button>
-            <!-- Requests List -->
             <div id="requestsList" class="request-list"></div>
-        </div>
-
-        <!-- Download Section -->
-        <div class="section download-section" id="downloadSection">
-            <h3>Download Data</h3>
-            <button onclick="downloadData()" class="download-button">Download Flight Data (JSON)</button>
         </div>
     </div>
 
     <script>
-        const flightData = {}; // Object to store flight data and requests
+        const flightData = {}; // Central JSON Object
 
-        // Clear localStorage when page loads
-        window.onload = function() {
-            localStorage.clear();
-        };
-
+        // Function to create a flight
         function createFlight() {
             const flightId = document.getElementById('flightId').value;
             const appearance_time = parseInt(document.getElementById('appearance_time').value);
@@ -177,25 +173,19 @@
             }
 
             flightData[flightId] = {
-                appearance_time,
-                origin_vertiport_id,
-                budget_constraint,
-                decay_factor,
-                requests: []
+                appearance_time: appearanceTime,
+                origin_vertiport_id: originVertiportId,
+                budget_constraint: budgetConstraint,
+                decay_factor: decayFactor,
+                requests: {}
             };
 
-            // Save to localStorage
-            localStorage.setItem('flightData', JSON.stringify(flightData));
-            
             // Show the request content
             document.getElementById('allRequestContent').style.display = 'block';
-            
-            // Clear any existing requests in the display
-            document.getElementById('requestsList').innerHTML = '';
-            
             alert('Flight created successfully!');
         }
 
+        // Function to submit a request
         function submitRequest() {
             const flightId = document.getElementById('flightId').value;
             const destination_vertiport_id = document.getElementById('destination_vertiport_id').value;
@@ -224,64 +214,23 @@
                 return;
             }
 
-            flight.requests.push({
-                destination_vertiport_id,
-               request_departure_time,
-               request_arrival_time,
-                valuation
-            });
+            const requestId = `R${Object.keys(flight.requests).length + 1}`;
+            flight.requests[requestId] = {
+                destination_vertiport_id: destinationVertiportId,
+                request_departure_time: departureTime,
+                request_arrival_time: arrivalTime,
+                valuation: valuation
+            };
 
-            // Update localStorage
-            localStorage.setItem('flightData', JSON.stringify(flightData));
-            updateRequestsList();
-            
-            // Clear the form
-            document.getElementById('destination_vertiport_id').value = '';
-            document.getElementById('requestDepartureTime').value = '';
-            document.getElementById('requestArrivalTime').value = '';
-            document.getElementById('requestValuation').value = '';
-            
             alert('Request submitted successfully!');
         }
 
-        function updateRequestsList() {
-            const requestsList = document.getElementById('requestsList');
-            const currentFlightId = document.getElementById('flightId').value;
-            const flight = flightData[currentFlightId];
-            
-            if (!flight || !flight.requests.length) {
-                requestsList.innerHTML = '<p>No requests submitted yet.</p>';
-                return;
-            }
+       
+            window.exportFlightData = function() {
+                return JSON.stringify(flightData, null, 2);
+            };
 
-            let html = '<h4>Submitted Requests:</h4>';
-            flight.requests.forEach((request, index) => {
-                html += `
-                    <div class="request-item">
-                        <strong>Request ${index + 1}:</strong><br>
-                        Destination: ${request.destination_vertiport_id}<br>
-                        Departure Time: ${request.departureTime}<br>
-                        Arrival Time: ${request.arrivalTime}<br>
-                        Valuation: ${request.valuation}
-                    </div>
-                `;
-            });
-            requestsList.innerHTML = html;
-        }
-
-        function downloadData() {
-            const dataStr = JSON.stringify(flightData, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = window.URL.createObjectURL(blob);
-            const downloadLink = document.createElement('a');
-            downloadLink.href = url;
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            downloadLink.download = `flight-data-${timestamp}.json`;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            window.URL.revokeObjectURL(url);
-        }
+          
     </script>
 </body>
 </html>
