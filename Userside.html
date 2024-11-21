@@ -7,78 +7,94 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            padding: 0;
-            color: #333;
-            background-image: url('AirTaxi.webp');
-            background-repeat: no-repeat;
-            background-position: center center;
-            background-attachment: fixed;
-            background-size: cover;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            min-height: 100vh;
-        }
-        h1 {
-            font-size: 3rem;
-            color: #fff;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
-            margin: 20px 0;
-        }
-        .section {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            margin-bottom: 20px;
-            padding: 20px;
-            width: 100%;
-            max-width: 600px;
-        }
-        .section h3 {
-            margin-top: 0;
-            color: #4CAF50;
-        }
-        .section select, .section input, .section button {
-            width: 100%;
-            margin: 10px 0;
-            padding: 10px;
-            font-size: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .section button {
-            background: #4CAF50;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .section button:hover {
-            background: #45a049;
-        }
-        .download-section {
-            margin-top: 20px;
-        }
-        .download-button {
-            background: #2196F3 !important;
-        }
-        .download-button:hover {
-            background: #1976D2 !important;
-        }
-        .request-list {
-            margin-top: 20px;
-        }
-        .request-item {
-            background: #f5f5f5;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 4px;
-            border-left: 4px solid #4CAF50;
-        }
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+    background-image: url('AirTaxi.webp');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-attachment: fixed;
+    background-size: cover;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    font-size: 3rem;
+    color: #fff;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+    margin: 20px 0;
+    text-align: center;
+}
+
+.section {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin: 20px auto;
+    padding: 20px;
+    width: 100%;
+    max-width: 500px;
+    box-sizing: border-box;
+}
+
+#allRequestContent {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    display: none;
+}
+
+.section h3 {
+    margin-top: 0;
+    color: #4CAF50;
+}
+
+.section label {
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+.section select,
+.section input,
+.section button {
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.section button {
+    background: #4CAF50;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.section button:hover {
+    background: #45a049;
+}
+
+.request-list {
+    margin-top: 20px;
+}
+
+.request-item {
+    background: #f5f5f5;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 4px;
+    border-left: 4px solid #4CAF50;
+}
+
     </style>
 </head>
 <body>
@@ -144,11 +160,11 @@
             <div id="requestsList" class="request-list"></div>
         </div>
 
-        <!-- Download Section -->
+         
         <div class="section download-section" id="downloadSection">
             <h3>Download Data</h3>
             <button onclick="downloadData()" class="download-button">Download Flight Data (JSON)</button>
-        </div>
+        </div> 
     </div>
 
     <script>
@@ -177,10 +193,11 @@
             }
 
             flightData[flightId] = {
-                appearanceTime,
-                originVertiportId,
-                budgetConstraint,
-                decayFactor,
+                flight_id: flightId,
+                appearance_time: appearanceTime,
+                origin_vertiport_id: originVertiportId,
+                budget_constraint: budgetConstraint,
+                decay_factor: decayFactor,
                 requests: []
             };
 
@@ -225,10 +242,10 @@
             }
 
             flight.requests.push({
-                destinationVertiportId,
-                departureTime,
-                arrivalTime,
-                valuation
+                destination_vertiport_id: destinationVertiportId,
+                request_departure_time: departureTime,
+                request_arrival_time: arrivalTime,
+                valuation: valuation
             });
 
             // Update localStorage
@@ -259,9 +276,9 @@
                 html += `
                     <div class="request-item">
                         <strong>Request ${index + 1}:</strong><br>
-                        Destination: ${request.destinationVertiportId}<br>
-                        Departure Time: ${request.departureTime}<br>
-                        Arrival Time: ${request.arrivalTime}<br>
+                        Destination: ${request.destination_vertiport_id}<br>
+                        Departure Time: ${request.request_departure_time}<br>
+                        Arrival Time: ${request.request_arrival_time}<br>
                         Valuation: ${request.valuation}
                     </div>
                 `;
@@ -282,6 +299,10 @@
             document.body.removeChild(downloadLink);
             window.URL.revokeObjectURL(url);
         }
+        function retrieveFlightDataJSON() {
+            return JSON.stringify(flightData, null, 2);
+        }
+
     </script>
 </body>
 </html>
