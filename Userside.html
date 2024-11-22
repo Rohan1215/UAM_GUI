@@ -106,9 +106,9 @@
             <option value="AC006">AC006</option>
         </select>
         <label>Appearance Time (0-100):</label>
-        <input type="number" id="appearance_time" min="0" max="100" placeholder="Enter a number between 0-100">
+        <input type="number" id="appearanceTime" min="0" max="100" placeholder="Enter a number between 0-100">
         <label>Origin Vertiport ID:</label>
-        <select id="origin_vertiport_id">
+        <select id="originVertiportId">
             <option value="" disabled selected>Select Origin Vertiport ID</option>
             <option value="V001">V001</option>
             <option value="V002">V002</option>
@@ -119,9 +119,9 @@
             <option value="V007">V007</option>
         </select>
         <label>Budget Constraint:</label>
-        <input type="number" id="budget_constraint" placeholder="Enter Budget Constraint">
+        <input type="number" id="budgetConstraint" placeholder="Enter Budget Constraint">
         <label>Decay Factor:</label>
-        <input type="number" id="decay_factor" placeholder="Enter Decay Factor">
+        <input type="number" id="decayFactor" placeholder="Enter Decay Factor">
         <button onclick="createFlight()">Create Flight</button>
     </div>
 
@@ -130,7 +130,7 @@
         <div class="section" id="requestForm">
             <h3>Submit Request</h3>
             <label>Destination Vertiport ID:</label>
-            <select id="destination_vertiport_id">
+            <select id="destinationVertiportId">
                 <option value="" disabled selected>Select Destination Vertiport ID</option>
                 <option value="V001">V001</option>
                 <option value="V002">V002</option>
@@ -157,17 +157,17 @@
         // Function to create a flight
         function createFlight() {
             const flightId = document.getElementById('flightId').value;
-            const appearance_time = parseInt(document.getElementById('appearance_time').value);
-            const origin_vertiport_id = document.getElementById('origin_vertiport_id').value;
-            const budget_constraint = parseFloat(document.getElementById('budget_constraint').value);
-            const decay_factor = parseFloat(document.getElementById('decay_factor').value);
+            const appearanceTime = parseInt(document.getElementById('appearanceTime').value);
+            const originVertiportId = document.getElementById('originVertiportId').value;
+            const budgetConstraint = parseFloat(document.getElementById('budgetConstraint').value);
+            const decayFactor = parseFloat(document.getElementById('decayFactor').value);
 
-            if (!flightId || isNaN(appearance_time) || !origin_vertiport_id || isNaN(budget_constraint) || isNaN(decay_factor)) {
+            if (!flightId || isNaN(appearanceTime) || !originVertiportId || isNaN(budgetConstraint) || isNaN(decayFactor)) {
                 alert('All fields are required for flight setup!');
                 return;
             }
 
-            if (appearance_time < 0 || appearance_time > 100) {
+            if (appearanceTime < 0 || appearanceTime > 100) {
                 alert('Appearance Time must be between 0 and 100!');
                 return;
             }
@@ -188,22 +188,22 @@
         // Function to submit a request
         function submitRequest() {
             const flightId = document.getElementById('flightId').value;
-            const destination_vertiport_id = document.getElementById('destination_vertiport_id').value;
-            constrequest_departureTime_time = parseInt(document.getElementById('requestDepartureTime').value);
-            const request_arrival_time= parseInt(document.getElementById('requestArrivalTime').value);
+            const destinationVertiportId = document.getElementById('destinationVertiportId').value;
+            const departureTime = parseInt(document.getElementById('requestDepartureTime').value);
+            const arrivalTime = parseInt(document.getElementById('requestArrivalTime').value);
             const valuation = parseFloat(document.getElementById('requestValuation').value);
 
-            if (!destination_vertiport_id || isNaN(departureTime) || isNaN(arrivalTime) || isNaN(valuation)) {
+            if (!destinationVertiportId || isNaN(departureTime) || isNaN(arrivalTime) || isNaN(valuation)) {
                 alert('All fields are required for request submission!');
                 return;
             }
 
-            if (request_departure_time< 0 || request_departure_time> 100 || request_arrival_time< 0 || request_arrival_time> 100) {
+            if (departureTime < 0 || departureTime > 100 || arrivalTime < 0 || arrivalTime > 100) {
                 alert('Departure and Arrival times must be between 0 and 100!');
                 return;
             }
 
-            if (request_departure_time>=request_arrival_time) {
+            if (departureTime >= arrivalTime) {
                 alert('Departure time must be earlier than arrival time!');
                 return;
             }
@@ -219,7 +219,8 @@
                 destination_vertiport_id: destinationVertiportId,
                 request_departure_time: departureTime,
                 request_arrival_time: arrivalTime,
-                valuation: valuation
+                valuation: valuation,
+                bid: valuation
             };
 
             alert('Request submitted successfully!');

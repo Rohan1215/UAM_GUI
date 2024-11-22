@@ -1,0 +1,1 @@
+{"AC001":{"appearance_time":14,"origin_vertiport_id":"V001","budget_constraint":40,"decay_factor":0.95,"requests":{"R1":{"destination_vertiport_id":"V001","request_departure_time":0,"request_arrival_time":1,"valuation":15,"bid":15},"R2":{"destination_vertiport_id":"V002","request_departure_time":20,"request_arrival_time":30,"valuation":45,"bid":45}}}}
